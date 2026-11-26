@@ -766,12 +766,26 @@ class StoryGenerator:
                 display = typed + cursor
                 phase = 2
 
+            # --- Decorative heart rows above & below (appear after 0.5s) ---
+            if local_t > 0.5:
+                deco_full = "  <3   *   <3   *   <3   *   <3   *   <3   *   <3  "
+                # pick a width that fits
+                deco = deco_full[: min(len(deco_full), cur_w - 4)]
+                c_deco_top = sample_stops(pal["heart"], 0.55 + 0.20 * math.sin(t * 2.8),      eff_16)
+                c_deco_bot = sample_stops(pal["heart"], 0.55 + 0.20 * math.sin(t * 2.8 + 1.6), eff_16)
+                # 2 rows of hearts above, 2 below
+                for off, c_d in [(-3, c_deco_top), (-2, c_deco_top), (2, c_deco_bot), (3, c_deco_bot)]:
+                    self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy + off, deco,
+                                              lambda i, n, c=c_d: c)
+
+            # --- Main message, big-spaced, centred ---
             if display:
-                # Bright white-pink colour, centred exactly on screen
-                c_msg = sample_stops(pal["heart"], 0.90, eff_16)
+                # Spaced-out text so it looks wide/bigger
+                spaced = "  ".join(display)   # e.g. "I  L  O  V  E  ..." 
+                c_msg = sample_stops(pal["heart"], 0.95, eff_16)
                 self._draw_centered_solid(
                     char_buf, col_buf, cur_w, canvas_h, cy,
-                    display,
+                    spaced,
                     lambda i, n, c=c_msg: c,
                 )
 
@@ -821,7 +835,7 @@ def run_local(args, kb_state):
         ascii_only=args.ascii,
         use_16color=args.use_16color,
         include_hud=True,
-        loop=True,
+        loop=False,
         initial_w=args.width,
         initial_h=args.height,
     )
