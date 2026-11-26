@@ -495,7 +495,7 @@ class LoveFrameGenerator:
         self,
         mode: str = "beat",
         theme: str = "crimson",
-        message: str = "I LOVE YOU",
+        message: str = "I LOVE YOU MINNUUUUU, UMMMAHHHH <3",
         ascii_only: bool = False,
         use_16color: bool = False,
         include_hud: bool = True,
