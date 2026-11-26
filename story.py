@@ -729,65 +729,69 @@ class StoryGenerator:
             gap_done   = del1_done + GAP                    # ~4.30s
             # MSG2 runs from gap_done onward
 
+            # --- 3-row-tall block font (each char is 3 lines high) ---
+            BF = {
+                " ": ["   ", "   ", "   "],
+                "I": ["***", " * ", "***"],
+                "L": ["*  ", "*  ", "***"],
+                "O": ["***", "* *", "***"],
+                "V": ["* *", "* *", " * "],
+                "E": ["***", "** ", "***"],
+                "U": ["* *", "* *", "***"],
+                "M": ["* *", "***", "* *"],
+                "N": ["**.", "***", ".**"],
+                "H": ["* *", "***", "* *"],
+                "A": [" * ", "***", "* *"],
+                "<": [" **", "** ", " **"],
+                "3": ["** ", " **", "** "],
+                "|": ["|", "|", "|"],
+            }
+
+            def to_big(text):
+                r0, r1, r2 = "", "", ""
+                for k, ch in enumerate(text.upper()):
+                    g = BF.get(ch, BF[" "])
+                    sep = " " if k > 0 else ""
+                    r0 += sep + g[0]
+                    r1 += sep + g[1]
+                    r2 += sep + g[2]
+                return r0, r1, r2
+
+            # --- determine display string ---
             if local_t <= type1_done:
-                # --- typing MSG1 ---
                 chars = int(local_t * TYPE_SPD)
-                typed = MSG1[:min(chars, len(MSG1))]
-                cursor = "|"                        # always on while typing
-                display = typed + cursor
-                phase = 1
+                display = MSG1[:min(chars, len(MSG1))] + "|"
 
             elif local_t <= hold1_done:
-                # --- holding MSG1, cursor blinks ---
                 blink = (local_t % 0.55) < 0.275
                 display = MSG1 + ("|" if blink else "")
-                phase = 1
 
             elif local_t <= del1_done:
-                # --- backspace-deleting MSG1 ---
-                del_prog = local_t - hold1_done
-                chars_left = max(0, len(MSG1) - int(del_prog * DEL_SPD))
+                chars_left = max(0, len(MSG1) - int((local_t - hold1_done) * DEL_SPD))
                 display = MSG1[:chars_left] + "|"
-                phase = 1
 
             elif local_t <= gap_done:
-                # --- blank gap ---
                 blink = (local_t % 0.55) < 0.275
                 display = "|" if blink else ""
-                phase = 2
 
             else:
-                # --- typing / holding MSG2 ---
                 elapsed2 = local_t - gap_done
                 chars = int(elapsed2 * TYPE_SPD)
                 typed = MSG2[:min(chars, len(MSG2))]
                 blink = (local_t % 0.55) < 0.275
                 cursor = "|" if (chars <= len(MSG2) or blink) else ""
                 display = typed + cursor
-                phase = 2
 
-            # --- Decorative heart rows above & below (appear after 0.5s) ---
-            if local_t > 0.5:
-                deco_full = "  <3   *   <3   *   <3   *   <3   *   <3   *   <3  "
-                # pick a width that fits
-                deco = deco_full[: min(len(deco_full), cur_w - 4)]
-                c_deco_top = sample_stops(pal["heart"], 0.55 + 0.20 * math.sin(t * 2.8),      eff_16)
-                c_deco_bot = sample_stops(pal["heart"], 0.55 + 0.20 * math.sin(t * 2.8 + 1.6), eff_16)
-                # 2 rows of hearts above, 2 below
-                for off, c_d in [(-3, c_deco_top), (-2, c_deco_top), (2, c_deco_bot), (3, c_deco_bot)]:
-                    self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy + off, deco,
-                                              lambda i, n, c=c_d: c)
-
-            # --- Main message, big-spaced, centred ---
+            # --- render as 3-row block letters ---
             if display:
-                # Spaced-out text so it looks wide/bigger
-                spaced = "  ".join(display)   # e.g. "I  L  O  V  E  ..." 
+                r0, r1, r2 = to_big(display)
                 c_msg = sample_stops(pal["heart"], 0.95, eff_16)
-                self._draw_centered_solid(
-                    char_buf, col_buf, cur_w, canvas_h, cy,
-                    spaced,
-                    lambda i, n, c=c_msg: c,
-                )
+                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy - 1,
+                                          r0, lambda i, n, c=c_msg: c)
+                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy,
+                                          r1, lambda i, n, c=c_msg: c)
+                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy + 1,
+                                          r2, lambda i, n, c=c_msg: c)
 
         # Assemble atomic ANSI frame with run-length color compression
         out_lines = ["\033[H"]
