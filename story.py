@@ -412,15 +412,10 @@ class StoryGenerator:
         cy = canvas_h // 2
 
         # -------------------------------------------------------------------
-        # Chapter 1: College 1st Year & The Teeth Aligner (0.0s .. 6.5s)
+        # Scene 1: College 1st Year & The Teeth Aligner (0.0s .. 6.5s)
         # -------------------------------------------------------------------
         if t < CHAPTER_STARTS[1]:
             local_t = t
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, 1,
-                f"~ Chapter 1: College 1st Year ~",
-                lambda i, n: col_gold,
-            )
 
             # Campus gate silhouette on left
             campus = [
@@ -446,30 +441,25 @@ class StoryGenerator:
             self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy + 1, her_x, " / \\ ", col_pink)
 
             if 1.0 <= local_t < 3.6:
-                msg = '"Why don\'t you smile?"'
-                self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy - 4, her_x - 6, msg[: int((local_t - 1.0) * 18)], col_pink)
+                msg = '"Eda, entha nee chirikathe?"'
+                self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy - 4, max(2, her_x - 10), msg[: int((local_t - 1.0) * 18)], col_pink)
             elif local_t >= 3.2:
-                msg2 = '"Because of my teeth aligner..."'
-                self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy - 4, max(2, his_x - 10), msg2[: int((local_t - 3.2) * 20)], col_accent)
+                msg2 = '"Athenik teeth aligner ullondaa..."'
+                self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy - 4, max(2, his_x - 12), msg2[: int((local_t - 3.2) * 20)], col_accent)
 
             if local_t > 4.8:
                 self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy - 2, his_x + 2, "*", col_gold)
                 self._draw_centered(
                     char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                    "And that's how our very first conversation began...",
+                    "First year-il angane nammal parichayapettu...",
                     lambda i, n: sample_stops(pal["text"], 0.6 + 0.4 * math.sin(t * 3 - i * 0.2), eff_16),
                 )
 
         # -------------------------------------------------------------------
-        # Chapter 2: Endless Conversations -> Best Friends (6.5s .. 12.5s)
+        # Scene 2: Endless Conversations -> Best Friends (6.5s .. 12.5s)
         # -------------------------------------------------------------------
         elif t < CHAPTER_STARTS[2]:
             local_t = t - CHAPTER_STARTS[1]
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, 1,
-                "~ Chapter 2: Endless Talks -> Best Friends ~",
-                lambda i, n: col_gold,
-            )
 
             # Characters closer together now
             his_x = cx - 9
@@ -482,13 +472,13 @@ class StoryGenerator:
             self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy + 1, her_x, "/| |\\", col_pink)
             self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy + 2, her_x, " / \\ ", col_pink)
 
-            # Floating chat bubbles rising between them
+            # Floating Manglish chat bubbles rising between them
             chats = [
-                (0.2, -12, "[ hey! ]"),
-                (1.1, 4,   "[ hahaha ]"),
-                (2.0, -10, "[ same!! ]"),
-                (2.9, 2,   "[ goodnight! ]"),
-                (3.8, -6,  "[ best friends! ]"),
+                (0.2, -14, "[ daa evideya? ]"),
+                (1.1, 4,   "[ hahaha pwoli! ]"),
+                (2.0, -13, "[ pinne entha? ]"),
+                (2.9, 3,   "[ miss u da ]"),
+                (3.8, -6,  "[ besties! ]"),
             ]
             for start_c, dx, bubble in chats:
                 if local_t >= start_c:
@@ -499,20 +489,15 @@ class StoryGenerator:
 
             self._draw_centered(
                 char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                f"{decor}  From classmates... to inseparable best friends  {decor}",
+                f"{decor}  Kuree samsarichu... nammal best friends aayi!  {decor}",
                 lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 3.5 - i * 0.25), eff_16),
             )
 
         # -------------------------------------------------------------------
-        # Chapter 3: The Hackathon Night -> Falling in Love (12.5s .. 18.5s)
+        # Scene 3: The Hackathon Night -> Falling in Love (12.5s .. 18.5s)
         # -------------------------------------------------------------------
         elif t < CHAPTER_STARTS[3]:
             local_t = t - CHAPTER_STARTS[2]
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, 1,
-                "~ Chapter 3: The Hackathon Night ~",
-                lambda i, n: col_gold,
-            )
 
             # Two glowing laptops + coffee cup
             desk = [
@@ -544,20 +529,15 @@ class StoryGenerator:
 
             self._draw_centered(
                 char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                f"{decor}  Between lines of code at that hackathon... we fell in love  {decor}",
+                f"{decor}  Aa hackathon rathri... nammal ishtathil aayi  {decor}",
                 lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4 - i * 0.25), eff_16),
             )
 
         # -------------------------------------------------------------------
-        # Chapter 4: 3 Days Later -> Proposal in the Car (18.5s .. 24.5s)
+        # Scene 4: 3 Days Later -> Proposal in the Car (18.5s .. 24.5s)
         # -------------------------------------------------------------------
         elif t < CHAPTER_STARTS[4]:
             local_t = t - CHAPTER_STARTS[3]
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, 1,
-                "~ Chapter 4: 3 Days Later... In My Car ~",
-                lambda i, n: col_gold,
-            )
 
             # Car gently gliding in from left during first 1.5s
             glide = min(1.0, local_t / 1.4)
@@ -578,31 +558,26 @@ class StoryGenerator:
             beam_len = 7 if math.sin(t * 8) > -0.8 else 5
             self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy + 2, car_x + 35, "=" * beam_len + "*", col_gold)
 
-            # Floating proposal ring / heart above the car
+            # Floating proposal line above the car
             if local_t > 1.6:
                 float_y = cy - 4 - int(0.5 + 0.5 * math.sin(local_t * 3.0))
                 self._draw_centered(
                     char_buf, col_buf, cur_w, canvas_h, float_y,
-                    f"{decor}  Will you be mine?  {decor}",
+                    f"{decor}  Ninte koode jeevikkanam... Will you be mine?  {decor}",
                     lambda i, n: sample_stops(pal["heart"], 0.65 + 0.35 * math.sin(t * 5 - i * 0.3), eff_16),
                 )
 
             self._draw_centered(
                 char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                "3 days later, inside my car, I proposed to her...",
+                "3 divasam kazhinju, ente car-il vechu njan propose cheythu...",
                 lambda i, n: sample_stops(pal["text"], 0.6 + 0.4 * math.sin(t * 3.5 - i * 0.2), eff_16),
             )
 
         # -------------------------------------------------------------------
-        # Chapter 5: The Hug & Committed Forever Finale (24.5s .. 34.0s)
+        # Scene 5: The Hug & Committed Forever Finale (24.5s .. 34.0s)
         # -------------------------------------------------------------------
         else:
             local_t = t - CHAPTER_STARTS[4]
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, 1,
-                "~ Chapter 5: She Hugged Me... Committed Forever ~",
-                lambda i, n: col_gold,
-            )
 
             if not self.fireworks:
                 fw0 = HeartFirework(cur_w, canvas_h)
@@ -661,19 +636,12 @@ class StoryGenerator:
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy - 1, "(>^_^)(^_^<)", lambda i, n: col_pink if i >= 6 else col_accent)
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy,     " /|    |\\ ", lambda i, n: col_pink if i >= 5 else col_accent)
 
-            pair = f"{self.his_name} & {self.her_name}" if (self.his_name and self.her_name) else "WE GOT COMMITTED!"
+            pair = f"{self.his_name} & {self.her_name} committed aayi!" if (self.his_name and self.her_name) else "nammal committed aayi!"
             self._draw_centered(
                 char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                f"{decor}  She hugged me... and {pair}  {decor}",
+                f"{decor}  Aval enne kettipidichu... {pair}  {decor}",
                 lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4.5 - i * 0.25), eff_16),
             )
-
-        # Progress bar at bottom of canvas
-        ch_num = self.current_chapter() + 1
-        bar_w = min(30, max(12, cur_w - 30))
-        filled = int((t / TOTAL_LOOP_TIME) * bar_w)
-        bar = f"[{('#' * filled).ljust(bar_w, '-')}] {ch_num}/5"
-        self._draw_centered(char_buf, col_buf, cur_w, canvas_h, canvas_h - 1, bar, lambda i, n: col_dim)
 
         # Assemble atomic ANSI frame with run-length color compression
         out_lines = ["\033[H"]
@@ -701,7 +669,7 @@ class StoryGenerator:
 
         if self.include_hud:
             hud_plain = (
-                f" [N/B] Chapter | [SPC] {'PAUSE' if self.paused else 'PLAY'} | "
+                f" [SPC] {'PAUSE' if self.paused else 'PLAY'} | "
                 f"[C] {cur_theme.upper()} | [A] {'ASCII' if self.ascii_only else 'HEART'} | [R] Replay | [Q] Quit"
             )
             out_lines.append(f"\033[90m{hud_plain[:cur_w].ljust(cur_w)}\033[0m")
