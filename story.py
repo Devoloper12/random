@@ -571,20 +571,33 @@ class StoryGenerator:
             beam_len = 7 if math.sin(t * 8) > -0.8 else 5
             self._draw_str(char_buf, col_buf, cur_w, canvas_h, cy + 2, car_x + 35, "=" * beam_len + "*", col_gold)
 
-            # Floating proposal line above the car
-            if local_t > 1.6:
+            # Proposal line and bottom caption
+            if local_t < 4.2:
+                if local_t > 1.6:
+                    float_y = cy - 4 - int(0.5 + 0.5 * math.sin(local_t * 3.0))
+                    self._draw_centered(
+                        char_buf, col_buf, cur_w, canvas_h, float_y,
+                        f"{decor}  Ninte koode jeevikkanam... Will you be mine?  {decor}",
+                        lambda i, n: sample_stops(pal["heart"], 0.65 + 0.35 * math.sin(t * 5 - i * 0.3), eff_16),
+                    )
+                self._draw_centered(
+                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
+                    "3 divasam kazhinju, ente car-il vechu njan propose cheythu...",
+                    lambda i, n: sample_stops(pal["text"], 0.6 + 0.4 * math.sin(t * 3.5 - i * 0.2), eff_16),
+                )
+            else:
+                # Acceptance transition: "Agane nmml set aayi!"
                 float_y = cy - 4 - int(0.5 + 0.5 * math.sin(local_t * 3.0))
                 self._draw_centered(
                     char_buf, col_buf, cur_w, canvas_h, float_y,
-                    f"{decor}  Ninte koode jeevikkanam... Will you be mine?  {decor}",
-                    lambda i, n: sample_stops(pal["heart"], 0.65 + 0.35 * math.sin(t * 5 - i * 0.3), eff_16),
+                    f"{decor}  YES! <3  {decor}",
+                    lambda i, n: sample_stops(pal["heart"], 0.75 + 0.25 * math.sin(t * 6 - i * 0.3), eff_16),
                 )
-
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                "3 divasam kazhinju, ente car-il vechu njan propose cheythu...",
-                lambda i, n: sample_stops(pal["text"], 0.6 + 0.4 * math.sin(t * 3.5 - i * 0.2), eff_16),
-            )
+                self._draw_centered(
+                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
+                    f"{decor}  Agane nmml set aayi!  {decor}",
+                    lambda i, n: sample_stops(pal["text"], 0.7 + 0.3 * math.sin(t * 4.0 - i * 0.2), eff_16),
+                )
 
         # -------------------------------------------------------------------
         # Scene 5: The Hug & Committed Forever Finale (24.5s .. 34.0s)
