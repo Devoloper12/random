@@ -8,348 +8,317 @@ import shutil
 
 os.system("")
 
-PINK = "\033[95m"
-RED = "\033[91m"
-BLUE = "\033[94m"
-CYAN = "\033[96m"
-GOLD = "\033[93m"
-WHITE = "\033[97m"
-GREEN = "\033[92m"
+R = "\033[91m"
+P = "\033[95m"
+B = "\033[94m"
+C = "\033[96m"
+Y = "\033[93m"
+W = "\033[97m"
+D = "\033[90m"
 RESET = "\033[0m"
 
-def dimensions():
+def size():
     s = shutil.get_terminal_size((80, 25))
-    return max(60, min(s.columns, 95)), max(20, min(s.lines, 30))
+    return max(65, min(s.columns, 95)), max(22, min(s.lines, 30))
 
-def new_screen():
-    w, h = dimensions()
-    return [[" " for _ in range(w)] for _ in range(h)]
+def screen():
+    w, h = size()
+    return [[(" ", RESET) for _ in range(w)] for _ in range(h)]
 
-def put(screen, x, y, text):
+def put(c, x, y, text, color=W):
     for i, ch in enumerate(text):
-        if 0 <= y < len(screen) and 0 <= x+i < len(screen[0]):
-            screen[y][x+i] = ch
+        if 0 <= y < len(c) and 0 <= x+i < len(c[0]):
+            c[y][x+i] = (ch, color)
 
-def center(screen, y, text):
-    x = max(0, (len(screen[0])-len(text))//2)
-    put(screen, x, y, text)
+def center(c, y, text, color=W):
+    put(c, max(0, (len(c[0])-len(text))//2), y, text, color)
 
-def render(screen, color=WHITE):
+def render(c):
     sys.stdout.write("\033[H\033[2J")
-    sys.stdout.write(color)
-    for row in screen:
-        sys.stdout.write("".join(row) + "\n")
-    sys.stdout.write(RESET)
+    for row in c:
+        last = None
+        for ch, color in row:
+            if color != last:
+                sys.stdout.write(color)
+                last = color
+            sys.stdout.write(ch)
+        sys.stdout.write(RESET + "\n")
     sys.stdout.flush()
 
-def pause(t=0.12):
-    time.sleep(t)
-
-def stars(screen, count=35):
-    h, w = len(screen), len(screen[0])
+def stars(c, count=35):
+    h, w = len(c), len(c[0])
     for _ in range(count):
         x = random.randrange(w)
-        y = random.randrange(max(1, h-4))
-        screen[y][x] = random.choice([".", "*", "+"])
+        y = random.randrange(2, max(3, h-6))
+        put(c, x, y, random.choice([".", "+", "*"]), D)
 
-def dialogue(speaker, message, color=PINK):
-    screen = new_screen()
-    stars(screen, 20)
-    center(screen, 5, "A LITTLE CONVERSATION...")
-    center(screen, 10, speaker)
-    center(screen, 12, '"' + message + '"')
-    render(screen, color)
-    pause(1.8)
+def subtitles(text):
+    c = screen()
+    center(c, 3, "THE SMILE THAT STARTED EVERYTHING", Y)
+    center(c, len(c)-4, text, W)
+    render(c)
+    time.sleep(1.6)
 
-def type_message(message, color=PINK, delay=0.045):
-    for char in message:
-        sys.stdout.write(color + char + RESET)
-        sys.stdout.flush()
-        time.sleep(delay)
-    print()
+def title():
+    for f in range(35):
+        c = screen()
+        stars(c, 50)
+        center(c, 5, "AN ORIGINAL LOVE STORY", Y)
+        center(c, 10, "THE DAY YOU ASKED ME TO SMILE", P)
+        center(c, 15, "BASED ON A TRUE STORY", W)
+        center(c, 20, "A FILM ABOUT TWO HEARTS", D)
+        render(c)
+        time.sleep(0.13)
 
-def title_scene():
-    for f in range(20):
-        s = new_screen()
-        stars(s, 45)
-        center(s, 5, "A STORY THAT CHANGED EVERYTHING")
-        center(s, 10, "COLLEGE. FRIENDSHIP. LOVE.")
-        center(s, 15, "A TRUE LOVE STORY")
-        render(s, PINK)
-        pause(0.18)
+def person(c, x, y, color=P):
+    put(c, x+1, y, "O", color)
+    put(c, x, y+1, "/|\\", color)
+    put(c, x, y+2, "/ \\", color)
 
-    pause(1)
+def campus():
+    w, h = size()
+    for f in range(40):
+        c = screen()
+        stars(c, 15)
 
-def college_scene():
-    w, h = dimensions()
-    ground = h-7
+        center(c, 2, "SCENE 01 - FIRST YEAR", Y)
 
-    for f in range(36):
-        s = new_screen()
-        stars(s, 12)
+        put(c, 3, 7, " ______________________________")
+        put(c, 3, 8, "|       COLLEGE CAMPUS         |")
+        put(c, 3, 9, "|______________________________|")
 
-        center(s, 2, "COLLEGE - FIRST YEAR")
-        put(s, 2, ground, "_"*(w-4))
+        put(c, 0, h-6, "_"*w)
 
-        left = 3 + f
-        right = w-8
+        person(c, 5+f, h-9, C)
+        person(c, w-12, h-9, P)
 
-        put(s, left, ground-3, " O ")
-        put(s, left, ground-2, "/|\\")
-        put(s, left, ground-1, "/ \\")
+        center(c, 4, "A NORMAL DAY. AN UNEXPECTED MEETING.")
+        render(c)
+        time.sleep(0.12)
 
-        put(s, right, ground-3, " O ")
-        put(s, right, ground-2, "/|\\")
-        put(s, right, ground-1, "/ \\")
+    subtitles("And then she asked a simple question...")
 
-        center(s, 5, "TWO PEOPLE. ONE UNEXPECTED MEETING.")
-        render(s, WHITE)
-        pause(0.14)
+    c = screen()
+    stars(c, 20)
+    person(c, 22, 9, C)
+    person(c, 39, 9, P)
+    center(c, 3, "THE FIRST CONVERSATION", Y)
+    center(c, 19, '"WHY DON\'T YOU SMILE?"', P)
+    render(c)
+    time.sleep(2)
 
-    dialogue("HER", "Why don't you smile?")
-    dialogue("YOU", "Because of my teeth aligner.")
+    subtitles("You smiled and explained about your teeth aligner.")
+    subtitles("Neither of you knew what was about to begin.")
 
-    s = new_screen()
-    center(s, 7, "SHE SMILED...")
-    center(s, 10, "AND SO DID YOUR STORY.")
-    render(s, GOLD)
-    pause(2)
+def friendship():
+    for f in range(45):
+        c = screen()
+        stars(c, 25)
+        center(c, 2, "SCENE 02 - THE FRIENDSHIP", Y)
 
-def friendship_scene():
-    w, h = dimensions()
+        center(c, 7, "MONDAY  -  CONVERSATIONS")
+        center(c, 10, "TUESDAY -  LAUGHTER")
+        center(c, 13, "WEDNESDAY - MORE TALKS")
+
+        center(c, 17, "MESSAGE AFTER MESSAGE...")
+        center(c, 20, "FRIENDS BECAME BEST FRIENDS.")
+
+        # Animated message bubbles
+        x = 5 + (f % 20)
+        put(c, x, 23, "<3", P)
+        put(c, len(c[0])-x-3, 23, "<3", R)
+
+        render(c)
+        time.sleep(0.14)
+
+    subtitles("Somewhere between all those conversations...")
+    subtitles("She became your favourite person.")
+
+def hackathon():
+    for f in range(45):
+        c = screen()
+        stars(c, 12)
+
+        center(c, 2, "SCENE 03 - THE HACKATHON", Y)
+        center(c, 6, "THE GREAT CODING NIGHT", C)
+
+        put(c, 5, 9, " __________________")
+        put(c, 5, 10, "| >_ HELLO WORLD  |")
+        put(c, 5, 11, "|________________|")
+        put(c, 9, 12, "|______|")
+
+        put(c, len(c[0])-24, 9, " __________________")
+        put(c, len(c[0])-24, 10, "| >_ BUILDING LOVE |")
+        put(c, len(c[0])-24, 11, "|_________________|")
+
+        center(c, 16, "IDEAS. DEADLINES. LAUGHTER.")
+        center(c, 19, "AND SOMETHING MORE...")
+        center(c, 22, "THEY FELL IN LOVE.", P)
+
+        render(c)
+        time.sleep(0.15)
+
+    subtitles("The hackathon changed everything.")
+    subtitles("Best friends. Two hearts. One feeling.")
+
+def countdown():
+    for number in ["3", "2", "1"]:
+        c = screen()
+        center(c, 5, "THREE DAYS LATER...", Y)
+        center(c, 12, number, R)
+        render(c)
+        time.sleep(0.9)
+
+def car():
+    w, h = size()
+
+    for f in range(45):
+        c = screen()
+        stars(c, 25)
+
+        center(c, 2, "SCENE 04 - THREE DAYS LATER", Y)
+        center(c, 5, "A QUIET EVENING...", C)
+
+        # Road
+        put(c, 0, h-5, "_"*w, D)
+
+        # Car body
+        x = w//2-17
+        put(c, x+6, 11, "  ___________________")
+        put(c, x+2, 12, " /                   \\")
+        put(c, x, 13, "|                     |")
+        put(c, x, 14, "|_____________________|")
+        put(c, x+5, 15, "O                   O", Y)
+
+        center(c, 19, "HE HAD SOMETHING TO SAY...")
+        center(c, 22, "BUT HIS HEART WAS RACING.", P)
+
+        render(c)
+        time.sleep(0.14)
+
+    subtitles("A deep breath...")
+    subtitles("A nervous smile...")
+    subtitles("And finally, the words came out.")
+
+def proposal():
+    w, h = size()
 
     for f in range(35):
-        s = new_screen()
-        stars(s, 22)
+        c = screen()
+        stars(c, 35)
 
-        center(s, 3, "DAYS TURNED INTO CONVERSATIONS...")
-        center(s, 7, "MESSAGES")
-        center(s, 9, "LAUGHTER")
-        center(s, 11, "LITTLE JOKES")
-        center(s, 13, "ENDLESS TALKS")
+        center(c, 2, "SCENE 05 - THE PROPOSAL", Y)
 
-        x = int(w/2 + math.sin(f/3)*15)
-        center(s, 17, "BEST FRIENDS <3")
-
-        put(s, max(0, x-3), 19, "<3")
-        render(s, PINK)
-        pause(0.15)
-
-    dialogue("HER", "You are my best friend.")
-    dialogue("YOU", "And you are mine.")
-
-def hackathon_scene():
-    w, h = dimensions()
-
-    for f in range(38):
-        s = new_screen()
-        stars(s, 15)
-
-        center(s, 2, "THE HACKATHON")
-        center(s, 5, "IDEAS. CODE. COFFEE. DEADLINES.")
-
-        # Laptops
-        center(s, 10, "  __________________     __________________")
-        center(s, 11, " |  >_ CODE MODE   |   |  >_ BUILD MODE  |")
-        center(s, 12, " |_________________|   |_________________|")
-        center(s, 13, "       |____|                  |____|")
-
-        center(s, 16, "BUT SOMETHING ELSE WAS HAPPENING...")
-        center(s, 19, "TWO BEST FRIENDS...")
-        center(s, 21, "FALLING IN LOVE.")
-
-        if f % 2 == 0:
-            center(s, 24, "<3     <3     <3")
-
-        render(s, CYAN)
-        pause(0.15)
-
-    dialogue("YOUR HEART", "Wait... am I falling in love?")
-    dialogue("HER HEART", "I think I am too.")
-
-    s = new_screen()
-    center(s, 8, "THE HACKATHON WAS OVER...")
-    center(s, 11, "BUT YOUR LOVE STORY HAD JUST BEGUN.")
-    render(s, RED)
-    pause(2)
-
-def countdown_scene():
-    for n in ["3", "2", "1"]:
-        s = new_screen()
-        center(s, 7, "THREE DAYS LATER...")
-        center(s, 13, n)
-        render(s, GOLD)
-        pause(0.9)
-
-    s = new_screen()
-    center(s, 10, "THE DAY YOU DECIDED TO TELL HER.")
-    render(s, PINK)
-    pause(2)
-
-def car_scene():
-    w, h = dimensions()
-
-    for f in range(30):
-        s = new_screen()
-        stars(s, 35)
-
-        center(s, 3, "A QUIET EVENING...")
-        center(s, 8, "        __________________")
-        center(s, 9, "   ____/                  \\____")
-        center(s, 10, "  |       YOUR CAR              |")
-        center(s, 11, "  |_____________________________|")
-        center(s, 12, "     O                      O")
-
-        center(s, 16, "YOUR HEART WAS BEATING FAST...")
-        center(s, 19, "YOU HAD SOMETHING TO SAY.")
-        render(s, BLUE)
-        pause(0.18)
-
-    dialogue("YOU", "I have something to tell you...")
-    dialogue("YOU", "I think I have fallen in love with you.")
-
-def proposal_scene():
-    w, h = dimensions()
-
-    for f in range(35):
-        s = new_screen()
-        stars(s, 30)
-
-        center(s, 3, "THE MOMENT OF TRUTH")
-
-        # Two characters
-        put(s, w//2-13, 12, " O")
-        put(s, w//2-14, 13, "/|\\")
-        put(s, w//2-14, 14, "/ \\")
+        person(c, w//2-13, 10, C)
 
         # Kneeling character
-        put(s, w//2+7, 13, " o")
-        put(s, w//2+5, 14, "/|__")
-        put(s, w//2+5, 15, "/ \\")
+        put(c, w//2+5, 11, "O", P)
+        put(c, w//2+3, 12, "/|__")
+        put(c, w//2+3, 13, "/ \\")
 
-        if f % 3 == 0:
-            center(s, 8, "<3")
-        else:
-            center(s, 8, "  *")
+        center(c, 6, "WILL YOU BE MINE?", P)
 
-        center(s, 19, "WILL YOU BE MINE?")
-        render(s, RED)
-        pause(0.16)
+        if f % 4 == 0:
+            center(c, 17, "<3", R)
 
-    dialogue("YOU", "Will you be mine forever?")
+        render(c)
+        time.sleep(0.15)
 
-    s = new_screen()
-    center(s, 8, "SHE LOOKED AT YOU...")
-    center(s, 11, "AND THEN...")
-    render(s, GOLD)
-    pause(2)
+    subtitles("You finally proposed...")
+    subtitles("And waited for her answer.")
 
-def hug_scene():
-    w, h = dimensions()
-
-    for f in range(30):
-        s = new_screen()
-        stars(s, 35)
-
-        center(s, 3, "SHE MOVED CLOSER...")
-        center(s, 10, "       \\ O /")
-        center(s, 11, "        \\|/")
-        center(s, 12, "         |")
-        center(s, 13, "        / \\")
-        center(s, 17, "         <3")
-
-        render(s, PINK)
-        pause(0.15)
-
-    for f in range(20):
-        s = new_screen()
-        stars(s, 45)
-
-        center(s, 6, "       O---O")
-        center(s, 7, "       /\\_/\\")
-        center(s, 8, "        / \\")
-
-        center(s, 13, "SHE HUGGED YOU.")
-        center(s, 16, "AND THAT WAS YOUR ANSWER.")
-        render(s, RED)
-        pause(0.2)
-
-    dialogue("YOUR HEART", "I wish this moment lasted forever.")
-
-def commitment_scene():
-    w, h = dimensions()
+def hug():
+    w, h = size()
 
     for f in range(40):
-        s = new_screen()
-        stars(s, 50)
+        c = screen()
+        stars(c, 50)
 
-        center(s, 4, "AND JUST LIKE THAT...")
-        center(s, 9, "TWO BEST FRIENDS")
-        center(s, 11, "BECAME TWO PEOPLE IN LOVE.")
-        center(s, 15, "COMMITTED. TOGETHER.")
-        center(s, 19, "<3       <3       <3")
+        center(c, 2, "SCENE 06 - THE ANSWER", Y)
 
-        render(s, PINK if f % 2 else RED)
-        pause(0.15)
+        # Two characters move together
+        x1 = w//2-14 + min(f//3, 5)
+        x2 = w//2+9 - min(f//3, 5)
 
-def finale():
-    s = new_screen()
-    stars(s, 60)
-    center(s, 5, "THE END?")
-    center(s, 9, "NO...")
-    center(s, 13, "JUST THE BEGINNING.")
-    render(s, GOLD)
-    pause(2)
+        person(c, x1, 10, C)
+        person(c, x2, 10, P)
+
+        if f > 17:
+            center(c, 7, "<3     <3     <3", R)
+
+        center(c, 20, "SHE HUGGED YOU.", P)
+        center(c, 22, "AND THAT WAS EVERYTHING.", W)
+
+        render(c)
+        time.sleep(0.15)
+
+    subtitles("The hug you will never forget.")
+    subtitles("Two hearts finally found their home.")
+
+def ending():
+    for f in range(35):
+        c = screen()
+        stars(c, 70)
+
+        center(c, 4, "SCENE 07 - TOGETHER", Y)
+        center(c, 9, "TWO BEST FRIENDS")
+        center(c, 12, "TWO HEARTS")
+        center(c, 15, "ONE PROMISE")
+        center(c, 19, "A LOVE STORY JUST BEGINNING", P)
+
+        render(c)
+        time.sleep(0.14)
 
     os.system("cls" if os.name == "nt" else "clear")
+    time.sleep(0.7)
 
     print("\n")
-    print(PINK + "       THE SMILE THAT STARTED EVERYTHING" + RESET)
-    print("\n")
+    print(Y + "       THE END... OR JUST THE BEGINNING?" + RESET)
+    time.sleep(1.5)
 
     messages = [
-        "It all started with one question...",
+        "It started with a question.",
+        "Why don't you smile?",
         "",
-        '"Why don\'t you smile?"',
-        "",
-        "Then came the conversations.",
-        "Then came the friendship.",
-        "Then came the hackathon.",
-        "Then came the feelings.",
+        "Then came friendship.",
+        "Then came a thousand conversations.",
+        "Then came one unforgettable hackathon.",
         "",
         "Three days later...",
-        "A car. A proposal. A hug.",
+        "One car. One proposal. One hug.",
         "",
-        "And two hearts chose each other.",
+        "And a promise to stay together.",
         "",
-        "Our story started with your question.",
-        "And I hope it never ends.",
+        "If I could live this story again...",
+        "I would still choose you.",
         "",
-        "        I LOVE YOU <3",
-        "",
-        "        FOREVER YOURS."
+        "        I LOVE YOU.",
+        "        FOREVER & ALWAYS."
     ]
 
-    for line in messages:
-        type_message(line, RED if "LOVE" in line else PINK)
-        pause(0.5)
+    for msg in messages:
+        for ch in msg:
+            sys.stdout.write(P + ch + RESET)
+            sys.stdout.flush()
+            time.sleep(0.045)
+        print()
+        time.sleep(0.65)
 
-    print("\n" + GOLD + "     TO BE CONTINUED..." + RESET)
+    print("\n" + Y + "          ROLL CREDITS <3" + RESET)
 
 try:
-    title_scene()
-    college_scene()
-    friendship_scene()
-    hackathon_scene()
-    countdown_scene()
-    car_scene()
-    proposal_scene()
-    hug_scene()
-    commitment_scene()
-    finale()
+    title()
+    campus()
+    friendship()
+    hackathon()
+    countdown()
+    car()
+    proposal()
+    hug()
+    ending()
 
 except KeyboardInterrupt:
-    print(RESET + "\n\nOUR STORY CONTINUES <3")
+    print(RESET + "\nTHE STORY CONTINUES...")
 
 finally:
     sys.stdout.write(RESET)
