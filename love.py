@@ -8,14 +8,11 @@ import shutil
 
 PINK = "\033[95m"
 RED = "\033[91m"
-GOLD = "\033[93m"
 RESET = "\033[0m"
 
 def main():
     os.system("")
     width, height = shutil.get_terminal_size((80, 25))
-    width = max(40, width)
-    height = max(15, height)
 
     heart = [
         "  **   **  ",
@@ -28,82 +25,59 @@ def main():
         "     *     "
     ]
 
-    particles = [
-        [random.randint(0, width - 1),
-         random.randint(0, height - 1)]
-        for _ in range(25)
+    stars = [
+        [random.randrange(width), random.randrange(height)]
+        for _ in range(30)
     ]
 
     try:
-        for frame in range(200):
+        for frame in range(250):
             width, height = shutil.get_terminal_size((80, 25))
             screen = [[" " for _ in range(width)]
                       for _ in range(height)]
 
-            for p in particles:
-                x, y = p
-                if 0 <= x < width and 0 <= y < height:
+            for star in stars:
+                x, y = star
+                if x < width and y < height:
                     screen[y][x] = random.choice([".", "+", "*"])
 
-                p[1] -= 1
-                if p[1] < 0:
-                    p[0] = random.randint(0, width - 1)
-                    p[1] = height - 1
+                star[1] -= 1
+                if star[1] < 0:
+                    star[0] = random.randrange(width)
+                    star[1] = height - 1
 
-            start_x = max(0, (width - 11) // 2)
-            start_y = max(0, height // 2 - 5)
-
-            pulse = 1 + 0.1 * math.sin(frame * 0.2)
+            x0 = max(0, (width - 11) // 2)
+            y0 = max(0, (height - 10) // 2)
 
             for i, line in enumerate(heart):
                 for j, char in enumerate(line):
                     if char == "*":
-                        x = start_x + j
-                        y = start_y + i
+                        x, y = x0 + j, y0 + i
                         if x < width and y < height:
                             screen[y][x] = "#"
 
             sys.stdout.write("\033[H\033[2J")
 
             for row in screen:
-                output = ""
                 for char in row:
                     if char == "#":
-                        output += RED + char + RESET
+                        sys.stdout.write(RED + "#" + RESET)
                     elif char in ".*+":
-                        output += PINK + char + RESET
+                        sys.stdout.write(PINK + char + RESET)
                     else:
-                        output += char
-                print(output)
+                        sys.stdout.write(char)
+                sys.stdout.write("\n")
 
-            print(PINK + "\n       YOU ARE MY UNIVERSE <3" + RESET)
+            sys.stdout.write(
+                PINK + "\n       YOU ARE MY UNIVERSE <3\n" + RESET
+            )
+            sys.stdout.flush()
             time.sleep(0.08)
 
-        print("\n" + GOLD + "   A MESSAGE FROM MY HEART..." + RESET)
-        time.sleep(1)
-
-        messages = [
-            "Every heartbeat reminds me of you...",
-            "You make my world beautiful.",
-            "You are my favourite person.",
-            "",
-            "       I LOVE YOU <3",
-            "       FOREVER & ALWAYS"
-        ]
-
-        for message in messages:
-            for char in message:
-                sys.stdout.write(RED + char + RESET)
-                sys.stdout.flush()
-                time.sleep(0.06)
-            print()
-            time.sleep(0.7)
+        print("\n" + RED + "I LOVE YOU!" + RESET)
 
     except KeyboardInterrupt:
-        print("\nLove you! <3")
-
-    finally:
-        print(RESET)
+        print("\nLove you!")
 
 if __name__ == "__main__":
     main()
