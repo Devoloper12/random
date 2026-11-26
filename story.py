@@ -358,6 +358,18 @@ class StoryGenerator:
                 char_buf[row_off + tx] = ch
                 col_buf[row_off + tx] = ansi
 
+    def _draw_centered_solid(self, char_buf, col_buf, cur_w: int, canvas_h: int, row: int, text: str, col_fn):
+        """Like _draw_centered but also stamps spaces, so it overwrites any sparks/particles below."""
+        if not (0 <= row < canvas_h) or not text:
+            return
+        sx = max(0, (cur_w - len(text)) // 2)
+        row_off = row * cur_w
+        for i, ch in enumerate(text):
+            tx = sx + i
+            if 0 <= tx < cur_w:
+                char_buf[row_off + tx] = ch
+                col_buf[row_off + tx] = col_fn(i, len(text))
+
     def _draw_centered(self, char_buf, col_buf, cur_w: int, canvas_h: int, row: int, text: str, col_fn):
         if not (0 <= row < canvas_h) or not text:
             return
@@ -478,7 +490,6 @@ class StoryGenerator:
                 (1.1, 4,   "[ hahaha pwoli! ]"),
                 (2.0, -13, "[ pinne entha? ]"),
                 (2.9, 3,   "[ miss u da ]"),
-                (3.8, -6,  "[ besties! ]"),
             ]
             for start_c, dx, bubble in chats:
                 if local_t >= start_c:
@@ -614,31 +625,89 @@ class StoryGenerator:
                             char_buf[idx] = "." if lr < 0.25 else (heart_sym if not sp.gold else "*")
                             col_buf[idx] = col_gold if sp.gold else sample_stops(pal["heart"], min(1.0, sp.tint * (0.35 + 0.65 * lr)), eff_16)
 
-            # Pulsing heart frame around the hugging couple
-            phase = (local_t % 1.2) / 1.2
-            boost = 0.14 * math.exp(-((phase - 0.15) / 0.06) ** 2)
-            sy_s = min(canvas_h * 0.34, cur_w / 5.2) * (1.0 + boost)
-            sx_s = sy_s * 2.05
-            for py in range(canvas_h):
-                ny = (cy - py) / sy_s + 0.12
-                row_off = py * cur_w
-                for px in range(cur_w):
-                    nx = (px - cx) / sx_s
-                    if -1.4 < nx < 1.4 and -1.2 < ny < 1.4:
-                        u = nx * nx + ny * ny - 1.0
-                        f = u * u * u - nx * nx * (ny ** 3)
-                        if -0.22 < f <= 0.0:
-                            idx = row_off + px
-                            char_buf[idx] = heart_sym if f > -0.10 else "*"
-                            col_buf[idx] = sample_stops(pal["heart"], 0.6 + boost * 2.0, eff_16)
+            # --- Matrix glitch cascade converging to "gayathri" ---
+            REVEAL_MSG = "gayathri"
+            GLITCH = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()-=[];:,./$@!~<>"
+            N_ROWS = 11
+            cascade_dur = 2.2   # secs to build all rows
+            decode_dur  = 3.8   # secs for each row to decode (chars fade to spaces from edges in)
 
-            # Hugging couple in the center of the heart
+            cas_top_y = cy - N_ROWS - 3  # top anchor of cascade (above couple)
+            max_row_w = min(cur_w - 6, 60)
+            min_row_w = len(REVEAL_MSG) + 2
+
+            for ri in range(N_ROWS):
+                appear_t = ri * (cascade_dur / N_ROWS)
+                if local_t < appear_t:
+                    continue
+                row_age = local_t - appear_t
+
+                # Width narrows from top (widest) to bottom (narrowest)
+                frac = ri / max(1, N_ROWS - 1)
+                row_w = max(min_row_w, int(max_row_w - (max_row_w - min_row_w) * frac))
+
+                # Fade outer chars to spaces as decode progresses
+                decode_prog = max(0.0, min(1.0, (row_age - 0.35) / decode_dur))
+                fade_n = int(decode_prog * max(0, (row_w - min_row_w)) / 2)
+
+                row_chars = []
+                for ci in range(row_w):
+                    edge_dist = min(ci, row_w - 1 - ci)
+                    if edge_dist < fade_n:
+                        row_chars.append(" ")
+                    else:
+                        seed = int(local_t * 19 + ci * 13 + ri * 47) % len(GLITCH)
+                        row_chars.append(GLITCH[seed])
+
+                y_pos = cas_top_y + ri
+                row_str = "".join(row_chars)
+                brightness = 0.18 + 0.62 * frac + 0.12 * math.sin(local_t * 6 + ri * 1.4)
+                c_row = sample_stops(pal["heart"], min(1.0, max(0.1, brightness)), eff_16)
+                self._draw_centered_solid(
+                    char_buf, col_buf, cur_w, canvas_h, y_pos, row_str,
+                    lambda i, n, c=c_row: c,
+                )
+
+            # "gayathri" glows at base of cascade with typewriter + blinking cursor
+            gaya_delay = cascade_dur * 0.28
+            if local_t >= gaya_delay:
+                g_shown = int((local_t - gaya_delay) * 7.5)
+                g_typed = REVEAL_MSG[: min(g_shown, len(REVEAL_MSG))]
+                g_blink = (local_t % 0.55) < 0.275
+                g_cursor = "|" if (g_shown <= len(REVEAL_MSG) or g_blink) else ""
+                g_display = g_typed + g_cursor
+                if g_display:
+                    c_gaya = sample_stops(pal["heart"], 1.0, eff_16)
+                    self._draw_centered_solid(
+                        char_buf, col_buf, cur_w, canvas_h, cas_top_y + N_ROWS + 1,
+                        g_display, lambda i, n, c=c_gaya: c,
+                    )
+
+            # Hugging couple just below the cascade base
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy - 1, "(>^_^)(^_^<)", lambda i, n: col_pink if i >= 6 else col_accent)
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy,     " /|    |\\ ", lambda i, n: col_pink if i >= 5 else col_accent)
 
+            # Typewriter line: "I LOVE UU MINNUUU" with blinking cursor
+            love_msg = "I LOVE UU MINNUUU"
+            type_delay = 1.2          # seconds before typing starts
+            type_speed = 10.0         # chars per second
+            if local_t >= type_delay:
+                chars_shown = int((local_t - type_delay) * type_speed)
+                typed = love_msg[: min(chars_shown, len(love_msg))]
+                # Blinking cursor: visible in first half of each 0.6s cycle; hides after full text + 0.3s
+                blink_on = (local_t % 0.6) < 0.30
+                cursor = "|" if (chars_shown <= len(love_msg) or blink_on) else ""
+                display = typed + cursor
+                tw_col = sample_stops(pal["heart"], 0.75 + 0.25 * math.sin(t * 4.0), eff_16)
+                self._draw_centered_solid(
+                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
+                    display,
+                    lambda i, n, c=tw_col: c,
+                )
+
             if self.his_name and self.her_name:
                 self._draw_centered(
-                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
+                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 2,
                     f"{decor}  {self.his_name} & {self.her_name}  {decor}",
                     lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4.5 - i * 0.25), eff_16),
                 )
