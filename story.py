@@ -744,6 +744,33 @@ class StoryGenerator:
             gap_done   = del1_done + GAP                    # ~4.30s
             # MSG2 runs from gap_done onward
 
+            # --- 2-row clean big text font ---
+            BIG_FONT = {
+                " ": ["  ", "  "],
+                "I": ["|", "|"],
+                "L": ["| ", "|_"],
+                "O": [" _ ", "(_)"],
+                "V": ["\\ /", " v "],
+                "E": ["|_", "|_"],
+                "U": ["| |", "|_|"],
+                "M": ["|\\/|", "|  |"],
+                "N": ["|\\|", "| |"],
+                "A": ["/\\", "/~~\\"],
+                "H": ["|-|", "| |"],
+                "<": ["<", "<"],
+                "3": ["3", "3"],
+                "|": ["|", "|"],
+            }
+
+            def render_big(text):
+                r0, r1 = "", ""
+                for i, c in enumerate(text):
+                    g = BIG_FONT.get(c, [c, c])
+                    pad = " " if i > 0 and c != " " and text[i - 1] != " " else ""
+                    r0 += pad + g[0]
+                    r1 += pad + g[1]
+                return r0, r1
+
             # --- determine display string ---
             if local_t <= type1_done:
                 chars = int(local_t * TYPE_SPD)
@@ -769,11 +796,14 @@ class StoryGenerator:
                 cursor = "|" if (chars <= len(MSG2) or blink) else ""
                 display = typed + cursor
 
-            # --- plain centred text, clean dark screen ---
+            # --- render big 2-row centred text on clean dark screen ---
             if display:
+                line0, line1 = render_big(display)
                 c_msg = sample_stops(pal["heart"], 0.95, eff_16)
+                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy - 1,
+                                          line0, lambda i, n, c=c_msg: c)
                 self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy,
-                                          display, lambda i, n, c=c_msg: c)
+                                          line1, lambda i, n, c=c_msg: c)
 
         # Assemble atomic ANSI frame with run-length color compression
         out_lines = ["\033[H"]
