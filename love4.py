@@ -125,7 +125,7 @@ def campus():
 
     speak("GIRL", "Athinentha? Chirichude!", PINK)
 
-   clear()
+   clear();
 center(GREEN + "And that was the beginning..." + RESET)
 wait(3)
 
