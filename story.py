@@ -407,18 +407,20 @@ class StoryGenerator:
         col_gold = quant_ansi(pal["gold"], eff_16, "\033[93m")
         col_pink = sample_stops(pal["heart"], 0.72, eff_16, "\033[95m")
 
-        # Background stars
-        for st in self.stars:
-            sx = st.x % cur_w
-            sy = st.y % max(2, canvas_h - 3)
-            tw = 0.5 + 0.5 * math.sin(t * st.speed + st.phase)
-            idx = sy * cur_w + sx
-            if tw > 0.78:
-                char_buf[idx] = "+"
-                col_buf[idx] = col_white
-            elif tw > 0.35:
-                char_buf[idx] = "."
-                col_buf[idx] = col_dim
+        # Background stars (skip in Scene 6 for clean dark screen)
+        in_scene6 = t >= CHAPTER_STARTS[5]
+        if not in_scene6:
+            for st in self.stars:
+                sx = st.x % cur_w
+                sy = st.y % max(2, canvas_h - 3)
+                tw = 0.5 + 0.5 * math.sin(t * st.speed + st.phase)
+                idx = sy * cur_w + sx
+                if tw > 0.78:
+                    char_buf[idx] = "+"
+                    col_buf[idx] = col_white
+                elif tw > 0.35:
+                    char_buf[idx] = "."
+                    col_buf[idx] = col_dim
 
         cx = cur_w // 2
         cy = canvas_h // 2
@@ -729,34 +731,6 @@ class StoryGenerator:
             gap_done   = del1_done + GAP                    # ~4.30s
             # MSG2 runs from gap_done onward
 
-            # --- 3-row-tall block font (each char is 3 lines high) ---
-            BF = {
-                " ": ["   ", "   ", "   "],
-                "I": ["***", " * ", "***"],
-                "L": ["*  ", "*  ", "***"],
-                "O": ["***", "* *", "***"],
-                "V": ["* *", "* *", " * "],
-                "E": ["***", "** ", "***"],
-                "U": ["* *", "* *", "***"],
-                "M": ["* *", "***", "* *"],
-                "N": ["**.", "***", ".**"],
-                "H": ["* *", "***", "* *"],
-                "A": [" * ", "***", "* *"],
-                "<": [" **", "** ", " **"],
-                "3": ["** ", " **", "** "],
-                "|": ["|", "|", "|"],
-            }
-
-            def to_big(text):
-                r0, r1, r2 = "", "", ""
-                for k, ch in enumerate(text.upper()):
-                    g = BF.get(ch, BF[" "])
-                    sep = " " if k > 0 else ""
-                    r0 += sep + g[0]
-                    r1 += sep + g[1]
-                    r2 += sep + g[2]
-                return r0, r1, r2
-
             # --- determine display string ---
             if local_t <= type1_done:
                 chars = int(local_t * TYPE_SPD)
@@ -782,16 +756,11 @@ class StoryGenerator:
                 cursor = "|" if (chars <= len(MSG2) or blink) else ""
                 display = typed + cursor
 
-            # --- render as 3-row block letters ---
+            # --- plain centred text, clean dark screen ---
             if display:
-                r0, r1, r2 = to_big(display)
                 c_msg = sample_stops(pal["heart"], 0.95, eff_16)
-                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy - 1,
-                                          r0, lambda i, n, c=c_msg: c)
                 self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy,
-                                          r1, lambda i, n, c=c_msg: c)
-                self._draw_centered_solid(char_buf, col_buf, cur_w, canvas_h, cy + 1,
-                                          r2, lambda i, n, c=c_msg: c)
+                                          display, lambda i, n, c=c_msg: c)
 
         # Assemble atomic ANSI frame with run-length color compression
         out_lines = ["\033[H"]
