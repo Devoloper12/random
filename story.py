@@ -636,12 +636,12 @@ class StoryGenerator:
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy - 1, "(>^_^)(^_^<)", lambda i, n: col_pink if i >= 6 else col_accent)
             self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy,     " /|    |\\ ", lambda i, n: col_pink if i >= 5 else col_accent)
 
-            pair = f"{self.his_name} & {self.her_name} committed aayi!" if (self.his_name and self.her_name) else "nammal committed aayi!"
-            self._draw_centered(
-                char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
-                f"{decor}  Aval enne kettipidichu... {pair}  {decor}",
-                lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4.5 - i * 0.25), eff_16),
-            )
+            if self.his_name and self.her_name:
+                self._draw_centered(
+                    char_buf, col_buf, cur_w, canvas_h, canvas_h - 3,
+                    f"{decor}  {self.his_name} & {self.her_name}  {decor}",
+                    lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4.5 - i * 0.25), eff_16),
+                )
 
         # Assemble atomic ANSI frame with run-length color compression
         out_lines = ["\033[H"]
