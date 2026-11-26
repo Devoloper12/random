@@ -35,10 +35,10 @@ def line():
     print(PINK + "=" * 72 + RESET)
 
 
-
 def speak(name, message, color=WHITE):
     print()
-    center(YELLOW + '"' + message + '"' + RESET)
+    print()
+    center(YELLOW + message + RESET)
     wait(1.8)
 
 
