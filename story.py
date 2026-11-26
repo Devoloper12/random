@@ -295,8 +295,8 @@ class HeartFirework:
 # 5-Chapter Story Animator
 # ---------------------------------------------------------------------------
 
-CHAPTER_STARTS = [0.0, 6.5, 12.5, 18.5, 24.5]
-TOTAL_LOOP_TIME = 34.0
+CHAPTER_STARTS = [0.0, 6.5, 12.5, 18.5, 24.5, 34.0]
+TOTAL_LOOP_TIME = 44.0
 
 
 class StoryGenerator:
@@ -587,7 +587,7 @@ class StoryGenerator:
         # -------------------------------------------------------------------
         # Scene 5: The Hug & Committed Forever Finale (24.5s .. 34.0s)
         # -------------------------------------------------------------------
-        else:
+        elif t < CHAPTER_STARTS[5]:
             local_t = t - CHAPTER_STARTS[4]
 
             if not self.fireworks:
@@ -625,67 +625,65 @@ class StoryGenerator:
                             char_buf[idx] = "." if lr < 0.25 else (heart_sym if not sp.gold else "*")
                             col_buf[idx] = col_gold if sp.gold else sample_stops(pal["heart"], min(1.0, sp.tint * (0.35 + 0.65 * lr)), eff_16)
 
-            # --- Matrix glitch cascade converging to "gayathri" ---
-            REVEAL_MSG = "gayathri"
-            GLITCH = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()-=[];:,./$@!~<>"
-            N_ROWS = 11
-            cascade_dur = 2.2   # secs to build all rows
-            decode_dur  = 3.8   # secs for each row to decode (chars fade to spaces from edges in)
-
-            cas_top_y = cy - N_ROWS - 3  # top anchor of cascade (above couple)
-            max_row_w = min(cur_w - 6, 60)
-            min_row_w = len(REVEAL_MSG) + 2
-
-            for ri in range(N_ROWS):
-                appear_t = ri * (cascade_dur / N_ROWS)
-                if local_t < appear_t:
+            # --- FULL-SCREEN heart filled with rolling "gayathri" text ---
+            HEART_TEXT = "gayathri"
+            # Gentle pulse -- stays huge, beats softly
+            pulse = 0.95 + 0.05 * math.sin(local_t * 2.4)
+            # Scale independently to fill terminal width AND height
+            sy_s = canvas_h * 0.44 * pulse
+            sx_s = cur_w  * 0.46 * pulse
+            scroll = int(local_t * 14) % len(HEART_TEXT)
+            pixel_n = 0
+            for py in range(canvas_h):
+                ny = (cy - py) / sy_s + 0.10
+                if ny < -1.65 or ny > 1.65:
                     continue
-                row_age = local_t - appear_t
+                row_off = py * cur_w
+                for px in range(cur_w):
+                    nx = (px - cx) / sx_s
+                    if -1.65 < nx < 1.65:
+                        u = nx * nx + ny * ny - 1.0
+                        f = u * u * u - nx * nx * (ny ** 3)
+                        if -0.22 < f <= 0.0:
+                            idx = row_off + px
+                            ch = HEART_TEXT[(pixel_n + scroll) % len(HEART_TEXT)]
+                            char_buf[idx] = ch
+                            depth = max(0.0, min(1.0, 0.40 + (1.0 - abs(ny)) * 0.60))
+                            col_buf[idx] = sample_stops(pal["heart"], depth, eff_16)
+                            pixel_n += 1
 
-                # Width narrows from top (widest) to bottom (narrowest)
-                frac = ri / max(1, N_ROWS - 1)
-                row_w = max(min_row_w, int(max_row_w - (max_row_w - min_row_w) * frac))
-
-                # Fade outer chars to spaces as decode progresses
-                decode_prog = max(0.0, min(1.0, (row_age - 0.35) / decode_dur))
-                fade_n = int(decode_prog * max(0, (row_w - min_row_w)) / 2)
-
-                row_chars = []
-                for ci in range(row_w):
-                    edge_dist = min(ci, row_w - 1 - ci)
-                    if edge_dist < fade_n:
-                        row_chars.append(" ")
-                    else:
-                        seed = int(local_t * 19 + ci * 13 + ri * 47) % len(GLITCH)
-                        row_chars.append(GLITCH[seed])
-
-                y_pos = cas_top_y + ri
-                row_str = "".join(row_chars)
-                brightness = 0.18 + 0.62 * frac + 0.12 * math.sin(local_t * 6 + ri * 1.4)
-                c_row = sample_stops(pal["heart"], min(1.0, max(0.1, brightness)), eff_16)
+            # "gayathri" label glows at the pointed bottom tip of the heart
+            lbl_y = cy + int(sy_s * 0.74)
+            if 0 < lbl_y < canvas_h - 1:
                 self._draw_centered_solid(
-                    char_buf, col_buf, cur_w, canvas_h, y_pos, row_str,
-                    lambda i, n, c=c_row: c,
+                    char_buf, col_buf, cur_w, canvas_h, lbl_y,
+                    "~ gayathri ~",
+                    lambda i, n: sample_stops(pal["text"], 0.65 + 0.35 * math.sin(t * 4 - i * 0.3), eff_16),
                 )
 
-            # "gayathri" glows at base of cascade with typewriter + blinking cursor
-            gaya_delay = cascade_dur * 0.28
-            if local_t >= gaya_delay:
-                g_shown = int((local_t - gaya_delay) * 7.5)
-                g_typed = REVEAL_MSG[: min(g_shown, len(REVEAL_MSG))]
-                g_blink = (local_t % 0.55) < 0.275
-                g_cursor = "|" if (g_shown <= len(REVEAL_MSG) or g_blink) else ""
-                g_display = g_typed + g_cursor
-                if g_display:
-                    c_gaya = sample_stops(pal["heart"], 1.0, eff_16)
-                    self._draw_centered_solid(
-                        char_buf, col_buf, cur_w, canvas_h, cas_top_y + N_ROWS + 1,
-                        g_display, lambda i, n, c=c_gaya: c,
-                    )
-
-            # Hugging couple just below the cascade base
-            self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy - 1, "(>^_^)(^_^<)", lambda i, n: col_pink if i >= 6 else col_accent)
-            self._draw_centered(char_buf, col_buf, cur_w, canvas_h, cy,     " /|    |\\ ", lambda i, n: col_pink if i >= 5 else col_accent)
+            # Centered ASCII heart art (replaces stick couple)
+            h = heart_sym
+            heart_rows = [
+                f"  {h}{h}{h}   {h}{h}{h}  ",
+                f" {h}{h}{h}{h}{h} {h}{h}{h}{h}{h} ",
+                f" {h}{h}{h}{h}{h}{h}{h}{h}{h}{h}{h} ",
+                f"  {h}{h}{h}{h}{h}{h}{h}{h}{h}  ",
+                f"   {h}{h}{h}{h}{h}{h}{h}   ",
+                f"    {h}{h}{h}{h}{h}    ",
+                f"     {h}{h}{h}     ",
+                f"      {h}      ",
+            ]
+            n_rows = len(heart_rows)
+            art_top = cy - n_rows // 2
+            for ri, art_line in enumerate(heart_rows):
+                depth = 0.40 + 0.60 * (ri / max(1, n_rows - 1))
+                pulse_d = depth + 0.08 * math.sin(local_t * 2.8 + ri * 0.3)
+                c_art = sample_stops(pal["heart"], min(1.0, pulse_d), eff_16)
+                self._draw_centered(
+                    char_buf, col_buf, cur_w, canvas_h, art_top + ri,
+                    art_line,
+                    lambda i, n, c=c_art: c,
+                )
 
             # Typewriter line: "I LOVE UU MINNUUU" with blinking cursor
             love_msg = "I LOVE UU MINNUUU"
@@ -710,6 +708,71 @@ class StoryGenerator:
                     char_buf, col_buf, cur_w, canvas_h, canvas_h - 2,
                     f"{decor}  {self.his_name} & {self.her_name}  {decor}",
                     lambda i, n: sample_stops(pal["text"], 0.55 + 0.45 * math.sin(t * 4.5 - i * 0.25), eff_16),
+                )
+
+        # -------------------------------------------------------------------
+        # Scene 6: Final Dark Message (34.0s .. 44.0s)
+        # -------------------------------------------------------------------
+        else:
+            local_t = t - CHAPTER_STARTS[5]
+
+            MSG1       = "I LOVE UU MINNU"
+            MSG2       = "UMMAHHH <3"
+            TYPE_SPD   = 9.0    # chars per second while typing
+            DEL_SPD    = 22.0   # chars per second while deleting
+            HOLD1      = 1.6    # seconds to hold MSG1 after fully typed
+            GAP        = 0.35   # blank pause between messages
+
+            type1_done = len(MSG1) / TYPE_SPD               # ~1.67s
+            hold1_done = type1_done + HOLD1                 # ~3.27s
+            del1_done  = hold1_done + len(MSG1) / DEL_SPD  # ~3.95s
+            gap_done   = del1_done + GAP                    # ~4.30s
+            # MSG2 runs from gap_done onward
+
+            if local_t <= type1_done:
+                # --- typing MSG1 ---
+                chars = int(local_t * TYPE_SPD)
+                typed = MSG1[:min(chars, len(MSG1))]
+                cursor = "|"                        # always on while typing
+                display = typed + cursor
+                phase = 1
+
+            elif local_t <= hold1_done:
+                # --- holding MSG1, cursor blinks ---
+                blink = (local_t % 0.55) < 0.275
+                display = MSG1 + ("|" if blink else "")
+                phase = 1
+
+            elif local_t <= del1_done:
+                # --- backspace-deleting MSG1 ---
+                del_prog = local_t - hold1_done
+                chars_left = max(0, len(MSG1) - int(del_prog * DEL_SPD))
+                display = MSG1[:chars_left] + "|"
+                phase = 1
+
+            elif local_t <= gap_done:
+                # --- blank gap ---
+                blink = (local_t % 0.55) < 0.275
+                display = "|" if blink else ""
+                phase = 2
+
+            else:
+                # --- typing / holding MSG2 ---
+                elapsed2 = local_t - gap_done
+                chars = int(elapsed2 * TYPE_SPD)
+                typed = MSG2[:min(chars, len(MSG2))]
+                blink = (local_t % 0.55) < 0.275
+                cursor = "|" if (chars <= len(MSG2) or blink) else ""
+                display = typed + cursor
+                phase = 2
+
+            if display:
+                # Bright white-pink colour, centred exactly on screen
+                c_msg = sample_stops(pal["heart"], 0.90, eff_16)
+                self._draw_centered_solid(
+                    char_buf, col_buf, cur_w, canvas_h, cy,
+                    display,
+                    lambda i, n, c=c_msg: c,
                 )
 
         # Assemble atomic ANSI frame with run-length color compression
@@ -763,7 +826,7 @@ def run_local(args, kb_state):
         initial_h=args.height,
     )
     if args.chapter:
-        gen.sim_time = CHAPTER_STARTS[max(0, min(4, args.chapter - 1))]
+        gen.sim_time = CHAPTER_STARTS[max(0, min(len(CHAPTER_STARTS) - 1, args.chapter - 1))]
 
     sys.stdout.write("\033[?25l\033[2J")
     sys.stdout.flush()
