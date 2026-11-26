@@ -125,9 +125,9 @@ def campus():
 
     speak("GIRL", "Athinentha? Chirichude!", PINK)
 
-    clear()
-    center(GREEN + "And that was the beginning..." + RESET)
-    wait(3)
+   clear()
+center(GREEN + "And that was the beginning..." + RESET)
+wait(3)
 
 
 # ---------------- SCENE 2 ----------------
